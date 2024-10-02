@@ -1,11 +1,12 @@
 import { makeAutoObservable } from 'mobx';
 
 export interface IWorkExperience {
-  startDate: string;
-  endDate: string;
+  startDate: Date | null;
+  endDate: Date | null;
   company: string;
   position: string;
   responsibilities: string;
+  checked: boolean;
 }
 
 interface Education {
@@ -57,7 +58,7 @@ class ResumeStore {
     }
   }
 
-  updateWorkExperience(index: number, field: keyof IWorkExperience, value: string) {
+  updateWorkExperience(index: number, field: keyof IWorkExperience, value: string | boolean | Date | null) {
     if (index >= 0 && index < this.workExperiences.length) {
       this.workExperiences[index] = {
         ...this.workExperiences[index],
@@ -68,6 +69,10 @@ class ResumeStore {
 
   addWorkExperience(experience: IWorkExperience) {
     this.workExperiences.push(experience);
+  }
+
+  removeWorkExperience(index: number) {
+    this.workExperiences.splice(index, 1);
   }
 
   updateEducation(field: string, value: string) {

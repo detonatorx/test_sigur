@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useNavigate } from 'react-router-dom';
-import { TextField, Button, Grid, FormControlLabel, Radio, RadioGroup, Box, Typography } from '@mui/material';
+import { TextField, Button, Grid, FormControlLabel, Radio, RadioGroup, Box, Typography, IconButton } from '@mui/material';
 import { resumeStore, IWorkExperience } from '../stores/resumeStore';
 import { DatePicker } from '@mui/x-date-pickers';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 const WorkExperienceFields: React.FC<{ index: number }> = observer(({ index }) => {
-  const [isCurrentJob, setIsCurrentJob] = useState(false);
-
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
     resumeStore.updateWorkExperience(index, name as keyof IWorkExperience, value);
@@ -15,39 +14,56 @@ const WorkExperienceFields: React.FC<{ index: number }> = observer(({ index }) =
 
   const handleDateChange = (date: Date | null, type: 'startDate' | 'endDate') => {
     if (date) {
-      resumeStore.updateWorkExperience(index, type, date.toISOString());
+      resumeStore.updateWorkExperience(index, type, date);
+    }
+
+    if (type === 'endDate') {
+      resumeStore.updateWorkExperience(index, 'checked', false);
+
     }
   };
 
+  const handleDelete = () => {
+    resumeStore.removeWorkExperience(index);
+  };
+
+  const handleCurrentJobChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const { checked } = event.target;
+    resumeStore.updateWorkExperience(index, 'endDate', checked ? null : new Date());
+    resumeStore.updateWorkExperience(index, 'checked', checked);
+  };
+
+  console.log('resumeStore.workExperiences[index].startDate', typeof resumeStore.workExperiences[index].startDate)
   return (
     <>
-      <Grid item xs={12}>
+      <Grid item xs={12} container justifyContent="space-between" alignItems="center">
         <Typography variant="h6">Опыт работы #{index + 1}</Typography>
+        <IconButton onClick={handleDelete} color="error">
+          {resumeStore.workExperiences.length > 1 && <DeleteIcon />}
+        </IconButton>
       </Grid>
       <Grid item xs={3}>
         <DatePicker
-          label="Дата начала (MM/YYYY)"
+          label="Дата начала (MM/ГГГГ)"
           views={['year', 'month']}
-          value={resumeStore.workExperiences[index].startDate ? new Date(resumeStore.workExperiences[index].startDate) : null}
+          value={resumeStore.workExperiences[index].startDate}
           onChange={(date) => handleDateChange(date, 'startDate')}
         />
       </Grid>
       <Grid item xs={3}>
         <DatePicker
-          label="Дата окончания (MM/YYYY)"
+          label='Дата окончания (MM/ГГГГ)'
           views={['year', 'month']}
-          value={resumeStore.workExperiences[index].endDate ? new Date(resumeStore.workExperiences[index].endDate) : null}
+          value={resumeStore.workExperiences[index].endDate}
           onChange={(date) => handleDateChange(date, 'endDate')}
+        // onChange={(date: Date | null) => handleDateChange(date, 'endDate')}
+
         />
         <FormControlLabel
           control={
             <Radio
-              checked={isCurrentJob}
-              onChange={() => {
-                setIsCurrentJob(!isCurrentJob);
-                const newEndDate = isCurrentJob ? '' : 'По настоящее время';
-                resumeStore.updateWorkExperience(index, 'endDate', newEndDate);
-              }}
+              checked={resumeStore.workExperiences[index].checked === true}
+              onChange={handleCurrentJobChange}
             />
           }
           label="По настоящее время"
@@ -90,18 +106,6 @@ const WorkExperienceFields: React.FC<{ index: number }> = observer(({ index }) =
 const WorkExperience: React.FC = observer(() => {
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (resumeStore.workExperiences.length === 0) {
-      resumeStore.addWorkExperience({
-        startDate: '',
-        endDate: '',
-        company: '',
-        position: '',
-        responsibilities: ''
-      });
-    }
-  }, []);
-
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
     if (name === 'hasWorkExperience') {
@@ -111,11 +115,12 @@ const WorkExperience: React.FC = observer(() => {
 
   const handleAddExperience = () => {
     resumeStore.addWorkExperience({
-      startDate: '',
-      endDate: '',
+      startDate: null,
+      endDate: null,
       company: '',
       position: '',
-      responsibilities: ''
+      responsibilities: '',
+      checked: false
     });
   };
 
@@ -124,6 +129,19 @@ const WorkExperience: React.FC = observer(() => {
     // All work experiences are already saved in the store
     navigate('/education');
   };
+
+  useEffect(() => {
+    if (resumeStore.workExperiences.length === 0) {
+      resumeStore.addWorkExperience({
+        startDate: null,
+        endDate: null,
+        company: '',
+        position: '',
+        responsibilities: '',
+        checked: false
+      });
+    }
+  }, []);
 
   return (
     <form onSubmit={handleSubmit}>
