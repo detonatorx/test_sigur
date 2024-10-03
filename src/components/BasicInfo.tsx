@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useNavigate } from 'react-router-dom';
-import { TextField, Button, Grid, FormControl, InputLabel, Select, MenuItem, RadioGroup, FormControlLabel, Radio, SelectChangeEvent, FormHelperText } from '@mui/material';
+import { TextField, Button, Grid, FormControl, InputLabel, Select, MenuItem, RadioGroup, FormControlLabel, Radio, SelectChangeEvent, FormHelperText, Typography, Box } from '@mui/material';
 import { resumeStore } from '../stores/resumeStore';
 import { DatePicker } from '@mui/x-date-pickers';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 
 const BasicInfo: React.FC = observer(() => {
   const navigate = useNavigate();
   const [fieldErrors, setFieldErrors] = useState<Record<string, boolean>>({});
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
@@ -32,13 +34,17 @@ const BasicInfo: React.FC = observer(() => {
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
     const errors: Record<string, boolean> = {};
-    const requiredFields = ['lastName', 'firstName', 'city', 'birthDate', 'gender', 'citizenship', 'desiredPosition', 'salary', 'currency'];
+    const requiredFields = ['lastName', 'firstName', 'city', 'birthDate', 'gender', 'citizenship', 'desiredPosition', 'salary', 'currency', 'photo'];
 
     requiredFields.forEach(field => {
       if (!resumeStore[field as keyof typeof resumeStore]) {
         errors[field] = true;
       }
     });
+
+    if (!selectedFile) {
+      errors.photo = true;
+    }
 
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
@@ -48,26 +54,46 @@ const BasicInfo: React.FC = observer(() => {
     }
   };
 
-
   return (
     <form onSubmit={handleSubmit}>
       <Grid container spacing={2}>
         <Grid item xs={12}>
-          <input
-            type="file"
-            accept="image/"
-            onChange={(e) => {
-              if (e.target.files && e.target.files[0]) {
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                  if (event.target && typeof event.target.result === 'string') {
-                    resumeStore.updateBasicInfo('photo', event.target.result);
+          <Box display="flex" alignItems="center">
+            <Button
+              variant="contained"
+              component="label"
+              startIcon={<CloudUploadIcon />}
+            >
+              Загрузить фото
+              <input
+                type="file"
+                accept="image/*"
+                hidden
+                onChange={(e) => {
+                  if (e.target.files && e.target.files[0]) {
+                    setSelectedFile(e.target.files[0]);
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                      if (event.target && typeof event.target.result === 'string') {
+                        resumeStore.updateBasicInfo('photo', event.target.result);
+                      }
+                    };
+                    reader.readAsDataURL(e.target.files[0]);
                   }
-                };
-                reader.readAsDataURL(e.target.files[0]);
-              }
-            }}
-          />
+                }}
+              />
+            </Button>
+            {selectedFile && (
+              <Typography variant="body2" sx={{ ml: 2 }}>
+                {selectedFile.name}
+              </Typography>
+            )}
+            {fieldErrors.photo && (
+              <Typography color="error" variant="caption" sx={{ ml: 2 }}>
+                "Фотография обязательна"
+              </Typography>
+            )}
+          </Box>
         </Grid>
         <Grid item xs={12}>
           <TextField
@@ -208,4 +234,5 @@ const BasicInfo: React.FC = observer(() => {
     </form>
   );
 });
+
 export default BasicInfo;
