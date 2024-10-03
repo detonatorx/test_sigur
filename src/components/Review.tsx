@@ -3,7 +3,6 @@ import { observer } from 'mobx-react-lite';
 import { Typography, Grid, List, ListItem, ListItemText, Box, Button } from '@mui/material';
 import { resumeStore } from '../stores/resumeStore';
 import { useNavigate } from 'react-router-dom';
-import '../index.css';
 
 const Review: React.FC = observer(() => {
   const navigate = useNavigate();
@@ -19,6 +18,26 @@ const Review: React.FC = observer(() => {
         <Typography variant="h4">Обзор резюме</Typography>
       </Grid>
       <Grid item xs={12}>
+      <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+      <Box
+          sx={{
+            width: '100%',
+            height: '300px',
+            overflow: 'hidden',
+            marginBottom: 2,
+          }}
+        >
+          <img
+            src={resumeStore.photo}
+            alt="Profile"
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+            }}
+          />
+        </Box>
+      </Grid>
         <Typography variant="h6">Основная информация</Typography>
         <Typography>Фамилия: {resumeStore.lastName}</Typography>
         <Typography>Имя: {resumeStore.firstName}</Typography>
