@@ -17,6 +17,10 @@ interface Education {
   graduationYear: string;
 }
 
+export interface IForeignLanguage {
+  language: string;
+  level: string;
+}
 class ResumeStore {
   // Basic Info
   photo: string = '';
@@ -81,6 +85,15 @@ class ResumeStore {
 
   addForeignLanguage(language: { language: string; level: string }) {
     this.foreignLanguages.push(language);
+  }
+
+  updateForeignLanguage(index: number, field: keyof IForeignLanguage, value: string | boolean | Date | null) {
+    if (index >= 0 && index < this.foreignLanguages.length) {
+      this.foreignLanguages[index] = {
+        ...this.foreignLanguages[index],
+        [field]: value
+      };
+    }
   }
 
   removeForeignLanguage(index: number) {

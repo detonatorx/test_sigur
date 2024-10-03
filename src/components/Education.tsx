@@ -1,13 +1,64 @@
 import React, { useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useNavigate } from 'react-router-dom';
-import { TextField, Button, Grid, Select, MenuItem, IconButton, Box, SelectChangeEvent } from '@mui/material';
+import { TextField, Button, Grid, Select, MenuItem, IconButton, Box, SelectChangeEvent, Typography, InputLabel, FormControl } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { resumeStore } from '../stores/resumeStore';
+import { IForeignLanguage, resumeStore } from '../stores/resumeStore';
+
+interface ILanguageProps {
+  index: number;
+  fieldErrors: Record<string, boolean>;
+  setFieldErrors: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
+}
+
+const LanguageFields: React.FC<ILanguageProps> = observer(({ index, fieldErrors, setFieldErrors }) => {
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | SelectChangeEvent<string>) => {
+    const { name, value } = event.target;
+    resumeStore.updateForeignLanguage(index, name as keyof IForeignLanguage, value);
+  }
+
+  const handleDelete = () => {
+    resumeStore.removeForeignLanguage(index);
+  };
+
+  console.log('resumeStore.foreignLanguages', resumeStore.foreignLanguages)
+  return (
+    <>
+      <Grid item xs={6}>
+        <TextField
+          fullWidth
+          name="language"
+          label="Иностранный язык"
+          value={resumeStore.foreignLanguages[index].language}
+          onChange={handleChange}
+        />
+      </Grid>
+      <Grid item xs={resumeStore.foreignLanguages.length > 1 ? 5 : 6}>
+        <Select
+          labelId="currency-label"
+          name="level"
+          value={resumeStore.foreignLanguages[index].level}
+          onChange={handleChange}
+          fullWidth
+        >
+          <MenuItem value="start">Начальный</MenuItem>
+          <MenuItem value="middle">Средний</MenuItem>
+          <MenuItem value="high">Высокий</MenuItem>
+        </Select>
+      </Grid>
+      <Grid item xs={1}>
+        <IconButton onClick={handleDelete} color="error">
+          {resumeStore.foreignLanguages.length > 1 && <DeleteIcon />}
+        </IconButton>
+      </Grid>
+    </>
+  );
+});
 
 const Education: React.FC = observer(() => {
   const navigate = useNavigate();
+  const [fieldErrors, setFieldErrors] = useState<Record<string, boolean>>({});
   const [foreignLanguage, setForeignLanguage] = useState({ language: '', level: '' });
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | SelectChangeEvent<string>) => {
@@ -16,8 +67,7 @@ const Education: React.FC = observer(() => {
   };
 
   const handleAddForeignLanguage = () => {
-    resumeStore.addForeignLanguage(foreignLanguage);
-    setForeignLanguage({ language: '', level: '' });
+    resumeStore.addForeignLanguage({ language: '', level: '' });
   };
 
   const handleAddEducation = () => {
@@ -40,17 +90,21 @@ const Education: React.FC = observer(() => {
     <form onSubmit={handleSubmit}>
       <Grid container spacing={2}>
         <Grid item xs={12}>
-          <Select
-            fullWidth
-            name="educationLevel"
-            value={resumeStore.educationLevel}
-            onChange={handleChange}
-            required
-          >
-            <MenuItem value="secondary">Среднее</MenuItem>
-            <MenuItem value="vocational">Среднее специальное</MenuItem>
-            <MenuItem value="higher">Высшее</MenuItem>
-          </Select>
+          <FormControl fullWidth error={fieldErrors.educationLevel}>
+            <InputLabel id="educationLevelId">Уровень образования*</InputLabel>
+            <Select
+              labelId="educationLevelId"
+              fullWidth
+              name="educationLevel"
+              value={resumeStore.educationLevel}
+              onChange={handleChange}
+              required
+            >
+              <MenuItem value="secondary">Среднее</MenuItem>
+              <MenuItem value="vocational">Среднее специальное</MenuItem>
+              <MenuItem value="higher">Высшее</MenuItem>
+            </Select>
+          </FormControl>
         </Grid>
         <Grid item xs={12}>
           <TextField
@@ -62,42 +116,20 @@ const Education: React.FC = observer(() => {
             required
           />
         </Grid>
-        <Grid item xs={12}>
-          <TextField
-            fullWidth
-            name="language"
-            label="Иностранный язык"
-            value={foreignLanguage.language}
-            onChange={(e) => setForeignLanguage({ ...foreignLanguage, language: e.target.value })}
-          />
-        </Grid>
-        <Grid item xs={12}>
-          <TextField
-            fullWidth
-            name="level"
-            label="Уровень владения"
-            value={foreignLanguage.level}
-            onChange={(e) => setForeignLanguage({ ...foreignLanguage, level: e.target.value })}
-          />
-          <Button onClick={handleAddForeignLanguage} startIcon={<AddIcon />}>
-            Добавить язык
-          </Button>
-        </Grid>
-        {resumeStore.foreignLanguages.map((lang, index) => (
-          <Grid item xs={12} key={index}>
-            <Box display="flex" alignItems="center">
-              <TextField
-                fullWidth
-                value={`${lang.language} - ${lang.level}`}
-                InputProps={{ readOnly: true }}
-              />
-              <IconButton onClick={() => resumeStore.removeForeignLanguage(index)}>
-                <DeleteIcon />
-              </IconButton>
-            </Box>
-          </Grid>
-        ))}
-        {resumeStore.educations.map((edu, index) => (
+
+        {resumeStore.foreignLanguages && (
+          <>
+            {resumeStore.foreignLanguages.map((_, index) => (
+              <LanguageFields key={index} index={index} fieldErrors={fieldErrors} setFieldErrors={setFieldErrors} />
+            ))}
+            <Grid item xs={12}>
+              <Button variant="outlined" onClick={handleAddForeignLanguage}>
+                Добавить язык
+              </Button>
+            </Grid>
+          </>
+        )}
+        {/* {resumeStore.educations.map((edu, index) => (
           <Grid container spacing={2} key={index}>
             <Grid item xs={12}>
               <TextField
@@ -140,7 +172,7 @@ const Education: React.FC = observer(() => {
               />
             </Grid>
           </Grid>
-        ))}
+        ))} */}
         <Grid item xs={12}>
           <Button onClick={handleAddEducation} startIcon={<AddIcon />}>
             Добавить место обучения
