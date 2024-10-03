@@ -14,7 +14,7 @@ export interface IEducation {
   institution: string;
   faculty: string;
   specialization: string;
-  graduationYear: string;
+  graduationYear: Date | null;
 }
 
 export interface IForeignLanguage {
@@ -43,7 +43,7 @@ class ResumeStore {
   // Education
   educationLevel: string = '';
   nativeLanguage: string = '';
-  foreignLanguages: { language: string; level: string }[] = [];
+  foreignLanguages: IForeignLanguage[] = [];
   educations: IEducation[] = [];
 
   constructor() {
@@ -104,7 +104,7 @@ class ResumeStore {
     this.educations.push(education);
   }
 
-  updateEducationPlace(index: number, field: keyof IEducation, value: string) {
+  updateEducationPlace(index: number, field: keyof IEducation, value: string | boolean | Date | null) {
     if (index >= 0 && index < this.educations.length) {
       this.educations[index] = {
         ...this.educations[index],

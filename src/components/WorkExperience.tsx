@@ -60,6 +60,7 @@ const WorkExperienceFields: React.FC<IWorkExperienceFieldsProps> = observer(({ i
 
     if (checked) {
       setFieldErrors(prev => ({ ...prev, [`dateOrder-${index}`]: false }));
+      setFieldErrors(prev => ({ ...prev, [`endDate-${index}`]: false }));
     }
   };
 
@@ -168,8 +169,6 @@ const WorkExperience: React.FC = observer(() => {
     }
   };
 
-  console.log('fieldErrors', fieldErrors);
-
   const handleAddExperience = () => {
     resumeStore.addWorkExperience({
       startDate: null,
@@ -199,19 +198,17 @@ const WorkExperience: React.FC = observer(() => {
         });
       });
 
-      if (Object.keys(errors).length > 0) {
-        setFieldErrors(prev => ({ ...prev, ...errors }));
-      }
-
-      setFieldErrors(prev => ({ ...prev, ...errors }));
-
       const check = Object.keys(fieldErrors).filter(key => {
-        console.log("key.split('-')[1]}", key.split('-')[1]);
-
         return (fieldErrors[`dateOrder-${key.split('-')[1]}`] === true)
       });
 
       if (check.length) {
+        return;
+      }
+
+      if (Object.keys(errors).length) {
+        setFieldErrors(prev => ({ ...prev, ...errors }));
+
         return;
       }
     }
@@ -223,14 +220,7 @@ const WorkExperience: React.FC = observer(() => {
 
   useEffect(() => {
     if (resumeStore.workExperiences.length === 0) {
-      resumeStore.addWorkExperience({
-        startDate: null,
-        endDate: null,
-        company: '',
-        position: '',
-        responsibilities: '',
-        checked: false
-      });
+      handleAddExperience();
     }
   }, []);
 

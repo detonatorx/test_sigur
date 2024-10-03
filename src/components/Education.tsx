@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useNavigate } from 'react-router-dom';
 import { TextField, Button, Grid, Select, MenuItem, IconButton, Box, SelectChangeEvent, Typography, InputLabel, FormControl } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { IEducation, IForeignLanguage, resumeStore } from '../stores/resumeStore';
+import { DatePicker } from '@mui/x-date-pickers';
 
 interface ILanguageProps {
   index: number;
@@ -16,13 +17,16 @@ const LanguageFields: React.FC<ILanguageProps> = observer(({ index, fieldErrors,
   const handleChange = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | SelectChangeEvent<string>) => {
     const { name, value } = event.target;
     resumeStore.updateForeignLanguage(index, name as keyof IForeignLanguage, value);
+
+    if (value) {
+      setFieldErrors(prev => ({ ...prev, [`${name}-${index}`]: false }));
+    }
   }
 
   const handleDelete = () => {
     resumeStore.removeForeignLanguage(index);
   };
 
-  console.log('resumeStore.foreignLanguages', resumeStore.foreignLanguages)
   return (
     <>
       <Grid item xs={6}>
@@ -32,6 +36,7 @@ const LanguageFields: React.FC<ILanguageProps> = observer(({ index, fieldErrors,
           label="Иностранный язык"
           value={resumeStore.foreignLanguages[index].language}
           onChange={handleChange}
+          error={fieldErrors[`language-${index}`]}
         />
       </Grid>
       <Grid item xs={5.5}>
@@ -41,6 +46,7 @@ const LanguageFields: React.FC<ILanguageProps> = observer(({ index, fieldErrors,
           value={resumeStore.foreignLanguages[index].level}
           onChange={handleChange}
           fullWidth
+          error={fieldErrors[`level-${index}`]}
         >
           <MenuItem value="start">Начальный</MenuItem>
           <MenuItem value="middle">Средний</MenuItem>
@@ -58,7 +64,6 @@ const LanguageFields: React.FC<ILanguageProps> = observer(({ index, fieldErrors,
   );
 });
 
-
 interface IEducationProps {
   index: number;
   fieldErrors: Record<string, boolean>;
@@ -69,7 +74,18 @@ const EducationFields: React.FC<IEducationProps> = observer(({ index, fieldError
   const handleChange = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = event.target;
     resumeStore.updateEducationPlace(index, name as keyof IEducation, value);
+
+    if (value) {
+      setFieldErrors(prev => ({ ...prev, [`${name}-${index}`]: false }));
+    }
   }
+
+  const handleDateChange = (date: Date | null) => {
+    if (date) {
+      resumeStore.updateEducationPlace(index, 'graduationYear', date);
+      setFieldErrors(prev => ({ ...prev, [`graduationYear-${index}`]: false }));
+    }
+  };
 
   const handleDelete = () => {
     resumeStore.removeEducation(index);
@@ -81,7 +97,7 @@ const EducationFields: React.FC<IEducationProps> = observer(({ index, fieldError
         <Grid item xs={12} container justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
           <Typography variant="h6">Место обучения #{index + 1}</Typography>
           <IconButton onClick={handleDelete} color="error">
-            <DeleteIcon />
+            {resumeStore.educations.length > 1 && <DeleteIcon />}
           </IconButton>
         </Grid>
 
@@ -91,7 +107,6 @@ const EducationFields: React.FC<IEducationProps> = observer(({ index, fieldError
           label="Название учебного заведения*"
           value={resumeStore.educations[index].institution}
           onChange={handleChange}
-          required
           error={fieldErrors[`institution-${index}`]}
         />
       </Grid>
@@ -102,7 +117,6 @@ const EducationFields: React.FC<IEducationProps> = observer(({ index, fieldError
           label="Факультет*"
           value={resumeStore.educations[index].faculty}
           onChange={handleChange}
-          required
           error={fieldErrors[`faculty-${index}`]}
         />
       </Grid>
@@ -113,19 +127,21 @@ const EducationFields: React.FC<IEducationProps> = observer(({ index, fieldError
           label="Специализация*"
           value={resumeStore.educations[index].specialization}
           onChange={handleChange}
-          required
           error={fieldErrors[`specialization-${index}`]}
         />
       </Grid>
       <Grid item xs={12}>
-        <TextField
-          fullWidth
-          name="graduationYear"
-          label="Год окончания*"
+        <DatePicker
+          label='Год окончания*'
+          views={['year']}
           value={resumeStore.educations[index].graduationYear}
-          onChange={handleChange}
-          required
-          error={fieldErrors[`graduationYear-${index}`]}
+          onChange={(date) => handleDateChange(date)}
+          slotProps={{
+            textField: {
+              error: fieldErrors[`graduationYear-${index}`],
+              helperText: fieldErrors[`graduationYear-${index}`] ? "Это поле обязательно" : "",
+            },
+          }}
         />
       </Grid>
     </>
@@ -135,11 +151,14 @@ const EducationFields: React.FC<IEducationProps> = observer(({ index, fieldError
 const Education: React.FC = observer(() => {
   const navigate = useNavigate();
   const [fieldErrors, setFieldErrors] = useState<Record<string, boolean>>({});
-  const [foreignLanguage, setForeignLanguage] = useState({ language: '', level: '' });
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | SelectChangeEvent<string>) => {
     const { name, value } = event.target;
     resumeStore.updateEducation(name as string, value as string);
+  
+    if (value) {
+      setFieldErrors(prev => ({ ...prev, [name]: false }));
+    }
   };
 
   const handleAddForeignLanguage = () => {
@@ -152,16 +171,65 @@ const Education: React.FC = observer(() => {
       institution: '',
       faculty: '',
       specialization: '',
-      graduationYear: '',
+      graduationYear: null,
     });
   };
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-    // Add validation here
-    navigate('/review');
-  };
+    const errors: Record<string, boolean> = {};
+  
+    if (!resumeStore.educationLevel) {
+      errors['educationLevel'] = true;
+    }
+  
+    if (!resumeStore.nativeLanguage) {
+      errors['nativeLanguage'] = true;
+    }
+  
+    if (resumeStore.foreignLanguages.length) {
+      resumeStore.foreignLanguages.forEach((language, index) => {
+        ['language', 'level'].forEach(field => {
+          if (!language[field as keyof IForeignLanguage]) {
+            errors[`${field}-${index}`] = true;
+          }
+        });
+      });
+    }
 
+    resumeStore.educations.forEach((education, index) => {
+      ['institution', 'faculty', 'specialization', 'graduationYear'].forEach(field => {
+        if (!education[field as keyof IEducation]) {
+          errors[`${field}-${index}`] = true;
+        }
+      });
+    });
+  
+    const check = Object.keys(fieldErrors).filter(key => {
+      return (fieldErrors[`nativeLanguage-${key.split('-')[1]}`] === true)
+    });
+
+    if (check.length) {
+      return;
+    }
+
+    if (Object.keys(errors).length) {
+      setFieldErrors(prev => ({ ...prev, ...errors }));
+      return;
+    }
+  
+    setFieldErrors({});
+    navigate('/review');
+  };  
+
+  console.log('fieldErrors', fieldErrors)
+  console.log('resumeStore.foreignLanguages', resumeStore)
+  useEffect(() => {
+    if (resumeStore.educations.length === 0) {
+      handleAddEducation();
+    }
+  }, []);
+  
   return (
     <form onSubmit={handleSubmit}>
       <Grid container spacing={2}>
@@ -174,7 +242,6 @@ const Education: React.FC = observer(() => {
               name="educationLevel"
               value={resumeStore.educationLevel}
               onChange={handleChange}
-              required
             >
               <MenuItem value="secondary">Среднее</MenuItem>
               <MenuItem value="vocational">Среднее специальное</MenuItem>
@@ -186,60 +253,16 @@ const Education: React.FC = observer(() => {
           <TextField
             fullWidth
             name="nativeLanguage"
-            label="Родной язык"
+            label="Родной язык*"
             value={resumeStore.nativeLanguage}
             onChange={handleChange}
-            required
+            error={fieldErrors.nativeLanguage}
           />
         </Grid>
 
         {resumeStore.foreignLanguages.map((_, index) => (
           <LanguageFields key={index} index={index} fieldErrors={fieldErrors} setFieldErrors={setFieldErrors} />
         ))}
-        {/* {resumeStore.educations.map((edu, index) => (
-          <Grid container spacing={2} key={index}>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                name={`institution-${index}`}
-                label="Название учебного заведения"
-                value={edu.institution}
-                onChange={(e) => resumeStore.updateEducationField(index, 'institution', e.target.value)}
-                required
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                name={`faculty-${index}`}
-                label="Факультет"
-                value={edu.faculty}
-                onChange={(e) => resumeStore.updateEducationField(index, 'faculty', e.target.value)}
-                required
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                name={`specialization-${index}`}
-                label="Специализация"
-                value={edu.specialization}
-                onChange={(e) => resumeStore.updateEducationField(index, 'specialization', e.target.value)}
-                required
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                name={`graduationYear-${index}`}
-                label="Год окончания"
-                value={edu.graduationYear}
-                onChange={(e) => resumeStore.updateEducationField(index, 'graduationYear', e.target.value)}
-                required
-              />
-            </Grid>
-          </Grid>
-        ))} */}
         <Grid item xs={12}>
           <Button onClick={handleAddForeignLanguage} startIcon={<AddIcon />}>
             Добавить язык
