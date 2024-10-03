@@ -34,6 +34,7 @@ const WorkExperienceFields: React.FC<IWorkExperienceFieldsProps> = observer(({ i
       resumeStore.updateWorkExperience(index, 'checked', false);
 
       const currentExperience = resumeStore.workExperiences[index];
+
       if (currentExperience && currentExperience.startDate && currentExperience.endDate &&
         currentExperience.startDate >= currentExperience.endDate && !currentExperience.checked) {
         const errors: Record<string, boolean> = {
@@ -52,8 +53,13 @@ const WorkExperienceFields: React.FC<IWorkExperienceFieldsProps> = observer(({ i
 
   const handleCurrentJobChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { checked } = event.target;
+
     resumeStore.updateWorkExperience(index, 'endDate', checked ? null : new Date());
     resumeStore.updateWorkExperience(index, 'checked', checked);
+
+    if (checked) {
+      setFieldErrors(prev => ({ ...prev, [`dateOrder-${index}`]: false }));
+    }
   };
 
   return (
@@ -160,6 +166,8 @@ const WorkExperience: React.FC = observer(() => {
     }
   };
 
+  console.log('fieldErrors', fieldErrors);
+
   const handleAddExperience = () => {
     resumeStore.addWorkExperience({
       startDate: null,
@@ -190,12 +198,24 @@ const WorkExperience: React.FC = observer(() => {
       });
 
       if (Object.keys(errors).length > 0) {
-        setFieldErrors(errors);
+        setFieldErrors(prev => ({ ...prev, ...errors }));
       }
-    } else {
-      setFieldErrors({});
-      navigate('/education');
+
+      setFieldErrors(prev => ({ ...prev, ...errors }));
+
+      const check = Object.keys(fieldErrors).filter(key => {
+        console.log("key.split('-')[1]}", key.split('-')[1]);
+
+        return (fieldErrors[`dateOrder-${key.split('-')[1]}`] === true)
+      });
+
+      if (check.length > 0) {
+        return;
+      }
     }
+
+    setFieldErrors({});
+    navigate('/education');
   };
 
 
