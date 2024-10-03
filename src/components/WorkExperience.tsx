@@ -27,12 +27,22 @@ const WorkExperienceFields: React.FC<IWorkExperienceFieldsProps> = observer(({ i
   const handleDateChange = (date: Date | null, type: 'startDate' | 'endDate') => {
     if (date) {
       resumeStore.updateWorkExperience(index, type, date);
-      setFieldErrors(prev => ({ ...prev, [`startDate-${index}`]: false }));
+      setFieldErrors(prev => ({ ...prev, [`${type}-${index}`]: false }));
     }
 
     if (type === 'endDate') {
       resumeStore.updateWorkExperience(index, 'checked', false);
 
+      const currentExperience = resumeStore.workExperiences[index];
+      if (currentExperience && currentExperience.startDate && currentExperience.endDate &&
+        currentExperience.startDate >= currentExperience.endDate && !currentExperience.checked) {
+        const errors: Record<string, boolean> = {
+          [`dateOrder-${index}`]: true
+        };
+        setFieldErrors(prev => ({ ...prev, ...errors }));
+      } else {
+        setFieldErrors(prev => ({ ...prev, [`dateOrder-${index}`]: false }));
+      }
     }
   };
 
@@ -53,6 +63,13 @@ const WorkExperienceFields: React.FC<IWorkExperienceFieldsProps> = observer(({ i
         <IconButton onClick={handleDelete} color="error">
           {resumeStore.workExperiences.length > 1 && <DeleteIcon />}
         </IconButton>
+      </Grid>
+      <Grid item xs={12}>
+        {fieldErrors[`dateOrder-${index}`] && (
+          <Typography color="error">
+            Дата начала должна быть раньше даты окончания
+          </Typography>
+        )}
       </Grid>
       <Grid item xs={3}>
         <DatePicker
@@ -127,6 +144,7 @@ const WorkExperienceFields: React.FC<IWorkExperienceFieldsProps> = observer(({ i
     </>
   );
 });
+
 const WorkExperience: React.FC = observer(() => {
   const navigate = useNavigate();
   const [fieldErrors, setFieldErrors] = useState<Record<string, boolean>>({});
@@ -159,8 +177,13 @@ const WorkExperience: React.FC = observer(() => {
 
     if (resumeStore.hasWorkExperience) {
       resumeStore.workExperiences.forEach((experience, index) => {
-        ['startDate', 'endDate', 'company', 'position'].forEach(field => {
+        ['startDate', 'company', 'position'].forEach(field => {
           if (!experience[field as keyof IWorkExperience]) {
+            errors[`${field}-${index}`] = true;
+          }
+        });
+        ['endDate'].forEach(field => {
+          if (!experience[field as keyof IWorkExperience] && experience.checked === false) {
             errors[`${field}-${index}`] = true;
           }
         });
