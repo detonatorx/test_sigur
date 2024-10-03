@@ -1,6 +1,5 @@
 import React from 'react';
 import { Container, Box, useTheme, useMediaQuery, Button } from '@mui/material';
-import { useNavigate, useLocation } from 'react-router-dom';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -9,10 +8,6 @@ interface LayoutProps {
 export default function Layout({ children }: LayoutProps) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const navigate = useNavigate();
-  const location = useLocation();
-
-  const isFirstScreen = location.pathname === '/'; // Adjust this if your first screen has a different path
 
   return (
     <Container maxWidth="lg">

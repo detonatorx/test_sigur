@@ -11,9 +11,30 @@ const BasicInfo: React.FC = observer(() => {
   const [fieldErrors, setFieldErrors] = useState<Record<string, boolean>>({});
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
+  const handleAttach = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setSelectedFile(e.target.files[0]);
+
+      const reader = new FileReader();
+
+      reader.onload = (event) => {
+        if (event.target && typeof event.target.result === 'string') {
+          resumeStore.updateBasicInfo('photo', event.target.result);
+        }
+      };
+      reader.readAsDataURL(e.target.files[0]);
+
+      if (e.target.files[0]) {
+        setFieldErrors(prev => ({ ...prev, photo: false }));
+      }
+    }
+  };
+
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
+
     resumeStore.updateBasicInfo(name, value);
+
     if (value) {
       setFieldErrors(prev => ({ ...prev, [name]: false }));
     }
@@ -21,7 +42,12 @@ const BasicInfo: React.FC = observer(() => {
 
   const handleSelectChange = (event: SelectChangeEvent<string>) => {
     const { name, value } = event.target;
+
     resumeStore.updateBasicInfo(name as string, value);
+
+    if (value) {
+      setFieldErrors(prev => ({ ...prev, [name]: false }));
+    }
   };
 
   const handleDateChange = (date: Date | null) => {
@@ -46,7 +72,7 @@ const BasicInfo: React.FC = observer(() => {
       errors.photo = true;
     }
 
-    if (Object.keys(errors).length > 0) {
+    if (Object.keys(errors).length) {
       setFieldErrors(errors);
     } else {
       setFieldErrors({});
@@ -69,18 +95,7 @@ const BasicInfo: React.FC = observer(() => {
                 type="file"
                 accept="image/*"
                 hidden
-                onChange={(e) => {
-                  if (e.target.files && e.target.files[0]) {
-                    setSelectedFile(e.target.files[0]);
-                    const reader = new FileReader();
-                    reader.onload = (event) => {
-                      if (event.target && typeof event.target.result === 'string') {
-                        resumeStore.updateBasicInfo('photo', event.target.result);
-                      }
-                    };
-                    reader.readAsDataURL(e.target.files[0]);
-                  }
-                }}
+                onChange={handleAttach}
               />
             </Button>
             {selectedFile && (

@@ -3,7 +3,7 @@ import { observer } from 'mobx-react-lite';
 import { Typography, Grid, List, ListItem, ListItemText, Box, Button } from '@mui/material';
 import { resumeStore } from '../stores/resumeStore';
 import { useNavigate } from 'react-router-dom';
-import '../styles/print.css';
+import '../index.css';
 
 const Review: React.FC = observer(() => {
   const navigate = useNavigate();

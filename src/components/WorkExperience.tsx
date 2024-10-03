@@ -40,6 +40,7 @@ const WorkExperienceFields: React.FC<IWorkExperienceFieldsProps> = observer(({ i
         const errors: Record<string, boolean> = {
           [`dateOrder-${index}`]: true
         };
+
         setFieldErrors(prev => ({ ...prev, ...errors }));
       } else {
         setFieldErrors(prev => ({ ...prev, [`dateOrder-${index}`]: false }));
@@ -54,7 +55,7 @@ const WorkExperienceFields: React.FC<IWorkExperienceFieldsProps> = observer(({ i
   const handleCurrentJobChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { checked } = event.target;
 
-    resumeStore.updateWorkExperience(index, 'endDate', checked ? null : new Date());
+    resumeStore.updateWorkExperience(index, 'endDate', checked && null);
     resumeStore.updateWorkExperience(index, 'checked', checked);
 
     if (checked) {
@@ -157,6 +158,7 @@ const WorkExperience: React.FC = observer(() => {
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
+
     if (name === 'hasWorkExperience') {
       resumeStore.setHasWorkExperience(value === 'true');
     }
@@ -209,7 +211,7 @@ const WorkExperience: React.FC = observer(() => {
         return (fieldErrors[`dateOrder-${key.split('-')[1]}`] === true)
       });
 
-      if (check.length > 0) {
+      if (check.length) {
         return;
       }
     }
