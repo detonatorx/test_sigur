@@ -9,7 +9,7 @@ export interface IWorkExperience {
   checked: boolean;
 }
 
-interface Education {
+export interface IEducation {
   level: string;
   institution: string;
   faculty: string;
@@ -44,7 +44,7 @@ class ResumeStore {
   educationLevel: string = '';
   nativeLanguage: string = '';
   foreignLanguages: { language: string; level: string }[] = [];
-  educations: Education[] = [];
+  educations: IEducation[] = [];
 
   constructor() {
     makeAutoObservable(this);
@@ -100,17 +100,21 @@ class ResumeStore {
     this.foreignLanguages.splice(index, 1);
   }
 
-  addEducation(education: Education) {
+  addEducation(education: IEducation) {
     this.educations.push(education);
   }
 
-  updateEducationField(index: number, field: keyof Education, value: string) {
+  updateEducationPlace(index: number, field: keyof IEducation, value: string) {
     if (index >= 0 && index < this.educations.length) {
       this.educations[index] = {
         ...this.educations[index],
         [field]: value
       };
     }
+  }
+  
+  removeEducation(index: number) {
+    this.educations.splice(index, 1);
   }
 
   setEducationLevel(level: string) {

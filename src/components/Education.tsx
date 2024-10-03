@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { TextField, Button, Grid, Select, MenuItem, IconButton, Box, SelectChangeEvent, Typography, InputLabel, FormControl } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { IForeignLanguage, resumeStore } from '../stores/resumeStore';
+import { IEducation, IForeignLanguage, resumeStore } from '../stores/resumeStore';
 
 interface ILanguageProps {
   index: number;
@@ -34,7 +34,7 @@ const LanguageFields: React.FC<ILanguageProps> = observer(({ index, fieldErrors,
           onChange={handleChange}
         />
       </Grid>
-      <Grid item xs={resumeStore.foreignLanguages.length > 1 ? 5 : 6}>
+      <Grid item xs={5.5}>
         <Select
           labelId="currency-label"
           name="level"
@@ -47,10 +47,86 @@ const LanguageFields: React.FC<ILanguageProps> = observer(({ index, fieldErrors,
           <MenuItem value="high">Высокий</MenuItem>
         </Select>
       </Grid>
-      <Grid item xs={1}>
-        <IconButton onClick={handleDelete} color="error">
-          {resumeStore.foreignLanguages.length > 1 && <DeleteIcon />}
-        </IconButton>
+      <Grid item xs={0.5} justifyContent={'flex-end'}>
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <IconButton onClick={handleDelete} color="error">
+            <DeleteIcon />
+          </IconButton>
+        </Box>
+      </Grid>
+    </>
+  );
+});
+
+
+interface IEducationProps {
+  index: number;
+  fieldErrors: Record<string, boolean>;
+  setFieldErrors: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
+}
+
+const EducationFields: React.FC<IEducationProps> = observer(({ index, fieldErrors, setFieldErrors }) => {
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = event.target;
+    resumeStore.updateEducationPlace(index, name as keyof IEducation, value);
+  }
+
+  const handleDelete = () => {
+    resumeStore.removeEducation(index);
+  };
+
+  return (
+    <>
+      <Grid item xs={12}>
+        <Grid item xs={12} container justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
+          <Typography variant="h6">Место обучения #{index + 1}</Typography>
+          <IconButton onClick={handleDelete} color="error">
+            <DeleteIcon />
+          </IconButton>
+        </Grid>
+
+        <TextField
+          fullWidth
+          name="institution"
+          label="Название учебного заведения*"
+          value={resumeStore.educations[index].institution}
+          onChange={handleChange}
+          required
+          error={fieldErrors[`institution-${index}`]}
+        />
+      </Grid>
+      <Grid item xs={12}>
+        <TextField
+          fullWidth
+          name="faculty"
+          label="Факультет*"
+          value={resumeStore.educations[index].faculty}
+          onChange={handleChange}
+          required
+          error={fieldErrors[`faculty-${index}`]}
+        />
+      </Grid>
+      <Grid item xs={12}>
+        <TextField
+          fullWidth
+          name="specialization"
+          label="Специализация*"
+          value={resumeStore.educations[index].specialization}
+          onChange={handleChange}
+          required
+          error={fieldErrors[`specialization-${index}`]}
+        />
+      </Grid>
+      <Grid item xs={12}>
+        <TextField
+          fullWidth
+          name="graduationYear"
+          label="Год окончания*"
+          value={resumeStore.educations[index].graduationYear}
+          onChange={handleChange}
+          required
+          error={fieldErrors[`graduationYear-${index}`]}
+        />
       </Grid>
     </>
   );
@@ -117,18 +193,9 @@ const Education: React.FC = observer(() => {
           />
         </Grid>
 
-        {resumeStore.foreignLanguages && (
-          <>
-            {resumeStore.foreignLanguages.map((_, index) => (
-              <LanguageFields key={index} index={index} fieldErrors={fieldErrors} setFieldErrors={setFieldErrors} />
-            ))}
-            <Grid item xs={12}>
-              <Button variant="outlined" onClick={handleAddForeignLanguage}>
-                Добавить язык
-              </Button>
-            </Grid>
-          </>
-        )}
+        {resumeStore.foreignLanguages.map((_, index) => (
+          <LanguageFields key={index} index={index} fieldErrors={fieldErrors} setFieldErrors={setFieldErrors} />
+        ))}
         {/* {resumeStore.educations.map((edu, index) => (
           <Grid container spacing={2} key={index}>
             <Grid item xs={12}>
@@ -173,6 +240,21 @@ const Education: React.FC = observer(() => {
             </Grid>
           </Grid>
         ))} */}
+        <Grid item xs={12}>
+          <Button onClick={handleAddForeignLanguage} startIcon={<AddIcon />}>
+            Добавить язык
+          </Button>
+        </Grid>
+
+        {resumeStore.educations.map((_, index) => (
+          <EducationFields
+            key={index}
+            index={index}
+            fieldErrors={fieldErrors}
+            setFieldErrors={setFieldErrors}
+          />
+        ))}
+
         <Grid item xs={12}>
           <Button onClick={handleAddEducation} startIcon={<AddIcon />}>
             Добавить место обучения
