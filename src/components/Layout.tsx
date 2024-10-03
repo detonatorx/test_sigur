@@ -1,5 +1,5 @@
 import React from 'react';
-import { Container, Box, useTheme, useMediaQuery, Button } from '@mui/material';
+import { Container, Box, useTheme, useMediaQuery } from '@mui/material';
 
 interface LayoutProps {
   children: React.ReactNode;
