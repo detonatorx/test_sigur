@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useNavigate } from 'react-router-dom';
 import { TextField, Button, Grid, FormControlLabel, Radio, RadioGroup, Box, Typography, IconButton } from '@mui/material';
@@ -6,15 +6,28 @@ import { resumeStore, IWorkExperience } from '../stores/resumeStore';
 import { DatePicker } from '@mui/x-date-pickers';
 import DeleteIcon from '@mui/icons-material/Delete';
 
-const WorkExperienceFields: React.FC<{ index: number }> = observer(({ index }) => {
+interface IWorkExperienceFieldsProps {
+  index: number;
+  fieldErrors: Record<string, boolean>;
+  setFieldErrors: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
+}
+
+const WorkExperienceFields: React.FC<IWorkExperienceFieldsProps> = observer(({ index, fieldErrors, setFieldErrors }) => {
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
+
     resumeStore.updateWorkExperience(index, name as keyof IWorkExperience, value);
+
+    if (value) {
+      setFieldErrors(prev => ({ ...prev, [`${name}-${index}`]: false }));
+    }
   };
+
 
   const handleDateChange = (date: Date | null, type: 'startDate' | 'endDate') => {
     if (date) {
       resumeStore.updateWorkExperience(index, type, date);
+      setFieldErrors(prev => ({ ...prev, [`startDate-${index}`]: false }));
     }
 
     if (type === 'endDate') {
@@ -33,7 +46,6 @@ const WorkExperienceFields: React.FC<{ index: number }> = observer(({ index }) =
     resumeStore.updateWorkExperience(index, 'checked', checked);
   };
 
-  console.log('resumeStore.workExperiences[index].startDate', typeof resumeStore.workExperiences[index].startDate)
   return (
     <>
       <Grid item xs={12} container justifyContent="space-between" alignItems="center">
@@ -44,20 +56,30 @@ const WorkExperienceFields: React.FC<{ index: number }> = observer(({ index }) =
       </Grid>
       <Grid item xs={3}>
         <DatePicker
-          label="Дата начала (MM/ГГГГ)"
+          label="Дата начала"
           views={['year', 'month']}
           value={resumeStore.workExperiences[index].startDate}
           onChange={(date) => handleDateChange(date, 'startDate')}
+          slotProps={{
+            textField: {
+              error: fieldErrors[`startDate-${index}`],
+              helperText: fieldErrors[`startDate-${index}`] ? "Это поле обязательно" : "",
+            },
+          }}
         />
       </Grid>
       <Grid item xs={3}>
         <DatePicker
-          label='Дата окончания (MM/ГГГГ)'
+          label='Дата окончания'
           views={['year', 'month']}
           value={resumeStore.workExperiences[index].endDate}
           onChange={(date) => handleDateChange(date, 'endDate')}
-        // onChange={(date: Date | null) => handleDateChange(date, 'endDate')}
-
+          slotProps={{
+            textField: {
+              error: fieldErrors[`endDate-${index}`],
+              helperText: fieldErrors[`endDate-${index}`] ? "Это поле обязательно" : "",
+            },
+          }}
         />
         <FormControlLabel
           control={
@@ -72,21 +94,23 @@ const WorkExperienceFields: React.FC<{ index: number }> = observer(({ index }) =
       <Grid item xs={12}>
         <TextField
           fullWidth
-          label="Название компании"
+          label="Название компании*"
           name="company"
           value={resumeStore.workExperiences[index].company}
           onChange={handleChange}
-          required
+          error={fieldErrors[`company-${index}`]}
+          helperText={fieldErrors[`company-${index}`] ? "Это поле обязательно" : ""}
         />
       </Grid>
       <Grid item xs={12}>
         <TextField
           fullWidth
-          label="Должность"
+          label="Должность*"
           name="position"
           value={resumeStore.workExperiences[index].position}
           onChange={handleChange}
-          required
+          error={fieldErrors[`position-${index}`]}
+          helperText={fieldErrors[`position-${index}`] ? "Это поле обязательно" : ""}
         />
       </Grid>
       <Grid item xs={12}>
@@ -105,11 +129,16 @@ const WorkExperienceFields: React.FC<{ index: number }> = observer(({ index }) =
 });
 const WorkExperience: React.FC = observer(() => {
   const navigate = useNavigate();
+  const [fieldErrors, setFieldErrors] = useState<Record<string, boolean>>({});
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
     if (name === 'hasWorkExperience') {
       resumeStore.setHasWorkExperience(value === 'true');
+    }
+
+    if (value === 'false') {
+      setFieldErrors({});
     }
   };
 
@@ -126,9 +155,26 @@ const WorkExperience: React.FC = observer(() => {
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-    // All work experiences are already saved in the store
-    navigate('/education');
+    const errors: Record<string, boolean> = {};
+
+    if (resumeStore.hasWorkExperience) {
+      resumeStore.workExperiences.forEach((experience, index) => {
+        ['startDate', 'endDate', 'company', 'position'].forEach(field => {
+          if (!experience[field as keyof IWorkExperience]) {
+            errors[`${field}-${index}`] = true;
+          }
+        });
+      });
+
+      if (Object.keys(errors).length > 0) {
+        setFieldErrors(errors);
+      }
+    } else {
+      setFieldErrors({});
+      navigate('/education');
+    }
   };
+
 
   useEffect(() => {
     if (resumeStore.workExperiences.length === 0) {
@@ -149,7 +195,7 @@ const WorkExperience: React.FC = observer(() => {
         <Grid item xs={12}>
           <RadioGroup
             name="hasWorkExperience"
-            value={resumeStore.hasWorkExperience.toString()}
+            value={resumeStore.hasWorkExperience}
             onChange={handleChange}
           >
             <FormControlLabel value="true" control={<Radio />} label="Есть опыт работы" />
@@ -160,7 +206,7 @@ const WorkExperience: React.FC = observer(() => {
         {resumeStore.hasWorkExperience && (
           <>
             {resumeStore.workExperiences.map((_, index) => (
-              <WorkExperienceFields key={index} index={index} />
+              <WorkExperienceFields key={index} index={index} fieldErrors={fieldErrors} setFieldErrors={setFieldErrors} />
             ))}
             <Grid item xs={12}>
               <Button variant="outlined" onClick={handleAddExperience}>

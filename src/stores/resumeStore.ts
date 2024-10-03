@@ -24,7 +24,7 @@ class ResumeStore {
   firstName: string = '';
   middleName: string = '';
   city: string = '';
-  birthDate: string = '';
+  birthDate: Date | null = null;
   gender: string = '';
   citizenship: string = '';
   desiredPosition: string = '';
@@ -52,7 +52,7 @@ class ResumeStore {
 
   updateBasicInfo(field: string, value: string | Date) {
     if (field === 'birthDate' && value instanceof Date) {
-      this.birthDate = value.toISOString().split('T')[0];
+      this.birthDate = value;
     } else {
       (this as any)[field] = value;
     }

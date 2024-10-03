@@ -1,16 +1,20 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useNavigate } from 'react-router-dom';
-import { TextField, Button, Grid, FormControl, InputLabel, Select, MenuItem, RadioGroup, FormControlLabel, Radio, SelectChangeEvent } from '@mui/material';
+import { TextField, Button, Grid, FormControl, InputLabel, Select, MenuItem, RadioGroup, FormControlLabel, Radio, SelectChangeEvent, FormHelperText } from '@mui/material';
 import { resumeStore } from '../stores/resumeStore';
 import { DatePicker } from '@mui/x-date-pickers';
 
 const BasicInfo: React.FC = observer(() => {
   const navigate = useNavigate();
+  const [fieldErrors, setFieldErrors] = useState<Record<string, boolean>>({});
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
     resumeStore.updateBasicInfo(name, value);
+    if (value) {
+      setFieldErrors(prev => ({ ...prev, [name]: false }));
+    }
   };
 
   const handleSelectChange = (event: SelectChangeEvent<string>) => {
@@ -20,14 +24,30 @@ const BasicInfo: React.FC = observer(() => {
 
   const handleDateChange = (date: Date | null) => {
     if (date) {
-      resumeStore.updateBasicInfo('birthDate', date.toISOString().split('T')[0]);
+      resumeStore.updateBasicInfo('birthDate', date);
+      setFieldErrors(prev => ({ ...prev, birthDate: false }));
     }
   };
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-    navigate('/work-experience');
+    const errors: Record<string, boolean> = {};
+    const requiredFields = ['lastName', 'firstName', 'city', 'birthDate', 'gender', 'citizenship', 'desiredPosition', 'salary', 'currency'];
+
+    requiredFields.forEach(field => {
+      if (!resumeStore[field as keyof typeof resumeStore]) {
+        errors[field] = true;
+      }
+    });
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+    } else {
+      setFieldErrors({});
+      navigate('/work-experience');
+    }
   };
+
 
   return (
     <form onSubmit={handleSubmit}>
@@ -52,21 +72,23 @@ const BasicInfo: React.FC = observer(() => {
         <Grid item xs={12}>
           <TextField
             fullWidth
-            label="Фамилия"
+            label="Фамилия*"
             name="lastName"
             value={resumeStore.lastName}
             onChange={handleChange}
-            required
+            error={fieldErrors.lastName}
+            helperText={fieldErrors.lastName ? "Это поле обязательно" : ""}
           />
         </Grid>
         <Grid item xs={12}>
           <TextField
             fullWidth
-            label="Имя"
+            label="Имя*"
             name="firstName"
             value={resumeStore.firstName}
             onChange={handleChange}
-            required
+            error={fieldErrors.firstName}
+            helperText={fieldErrors.firstName ? "Это поле обязательно" : ""}
           />
         </Grid>
         <Grid item xs={12}>
@@ -81,22 +103,29 @@ const BasicInfo: React.FC = observer(() => {
         <Grid item xs={12}>
           <TextField
             fullWidth
-            label="Город проживания"
+            label="Город проживания*"
             name="city"
             value={resumeStore.city}
             onChange={handleChange}
-            required
+            error={fieldErrors.city}
+            helperText={fieldErrors.city ? "Это поле обязательно" : ""}
           />
         </Grid>
         <Grid item xs={12}>
           <DatePicker
             label="Дата рождения*"
-            value={resumeStore.birthDate ? new Date(resumeStore.birthDate) : null}
+            value={resumeStore.birthDate}
             onChange={handleDateChange}
+            slotProps={{
+              textField: {
+                error: fieldErrors.birthDate,
+                helperText: fieldErrors.birthDate ? "Это поле обязательно" : "",
+              },
+            }}
           />
         </Grid>
         <Grid item xs={12}>
-          <FormControl component="fieldset" required>
+          <FormControl component="fieldset" error={fieldErrors.gender}>
             <RadioGroup
               aria-label="gender"
               name="gender"
@@ -106,41 +135,45 @@ const BasicInfo: React.FC = observer(() => {
               <FormControlLabel value="male" control={<Radio />} label="Мужской" />
               <FormControlLabel value="female" control={<Radio />} label="Женский" />
             </RadioGroup>
+            {fieldErrors.gender && <FormHelperText>Это поле обязательно</FormHelperText>}
           </FormControl>
         </Grid>
         <Grid item xs={12}>
           <TextField
             fullWidth
-            label="Гражданство"
+            label="Гражданство*"
             name="citizenship"
             value={resumeStore.citizenship}
             onChange={handleChange}
-            required
+            error={fieldErrors.citizenship}
+            helperText={fieldErrors.citizenship ? "Это поле обязательно" : ""}
           />
         </Grid>
         <Grid item xs={12}>
           <TextField
             fullWidth
-            label="Желаемая должность"
+            label="Желаемая должность*"
             name="desiredPosition"
             value={resumeStore.desiredPosition}
             onChange={handleChange}
-            required
+            error={fieldErrors.desiredPosition}
+            helperText={fieldErrors.desiredPosition ? "Это поле обязательно" : ""}
           />
         </Grid>
         <Grid item xs={8}>
           <TextField
             fullWidth
-            label="Зарплата"
+            label="Зарплата*"
             name="salary"
             type="number"
             value={resumeStore.salary}
             onChange={handleChange}
-            required
+            error={fieldErrors.salary}
+            helperText={fieldErrors.salary ? "Это поле обязательно" : ""}
           />
         </Grid>
         <Grid item xs={4}>
-          <FormControl fullWidth required>
+          <FormControl fullWidth error={fieldErrors.currency}>
             <InputLabel id="currency-label">Валюта*</InputLabel>
             <Select
               labelId="currency-label"
@@ -152,6 +185,7 @@ const BasicInfo: React.FC = observer(() => {
               <MenuItem value="USD">USD</MenuItem>
               <MenuItem value="EUR">EUR</MenuItem>
             </Select>
+            {fieldErrors.currency && <FormHelperText>Это поле обязательно</FormHelperText>}
           </FormControl>
         </Grid>
         <Grid item xs={12}>

@@ -22,7 +22,7 @@ const Review: React.FC = observer(() => {
         <Typography>Фамилия: {resumeStore.lastName}</Typography>
         <Typography>Имя: {resumeStore.firstName}</Typography>
         <Typography>Отчество: {resumeStore.middleName}</Typography>
-        <Typography>Дата рождения: {resumeStore.birthDate}</Typography>
+        {/* <Typography>Дата рождения: {resumeStore.birthDate}</Typography> */}
         {/* <Typography>Телефон: {resumeStore.phone}</Typography> */}
         {/* <Typography>Email: {resumeStore.email}</Typography> */}
       </Grid>
