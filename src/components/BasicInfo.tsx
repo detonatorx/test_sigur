@@ -173,8 +173,8 @@ const BasicInfo: React.FC = observer(() => {
               value={resumeStore.gender}
               onChange={handleChange}
             >
-              <FormControlLabel value="male" control={<Radio />} label="Мужской" />
-              <FormControlLabel value="female" control={<Radio />} label="Женский" />
+              <FormControlLabel value="Мужской" control={<Radio />} label="Мужской" />
+              <FormControlLabel value="Женский" control={<Radio />} label="Женский" />
             </RadioGroup>
             {fieldErrors.gender && <FormHelperText>Это поле обязательно</FormHelperText>}
           </FormControl>

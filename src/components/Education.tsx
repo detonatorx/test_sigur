@@ -48,9 +48,9 @@ const LanguageFields: React.FC<ILanguageProps> = observer(({ index, fieldErrors,
           fullWidth
           error={fieldErrors[`level-${index}`]}
         >
-          <MenuItem value="start">Начальный</MenuItem>
-          <MenuItem value="middle">Средний</MenuItem>
-          <MenuItem value="high">Высокий</MenuItem>
+          <MenuItem value="Начальный">Начальный</MenuItem>
+          <MenuItem value="Средний">Средний</MenuItem>
+          <MenuItem value="Высокий">Высокий</MenuItem>
         </Select>
       </Grid>
       <Grid item xs={0.5} justifyContent={'flex-end'}>
@@ -222,8 +222,6 @@ const Education: React.FC = observer(() => {
     navigate('/review');
   };  
 
-  console.log('fieldErrors', fieldErrors)
-  console.log('resumeStore.foreignLanguages', resumeStore)
   useEffect(() => {
     if (resumeStore.educations.length === 0) {
       handleAddEducation();
@@ -243,9 +241,9 @@ const Education: React.FC = observer(() => {
               value={resumeStore.educationLevel}
               onChange={handleChange}
             >
-              <MenuItem value="secondary">Среднее</MenuItem>
-              <MenuItem value="vocational">Среднее специальное</MenuItem>
-              <MenuItem value="higher">Высшее</MenuItem>
+              <MenuItem value="Среднее">Среднее</MenuItem>
+              <MenuItem value="Среднее специальное">Среднее специальное</MenuItem>
+              <MenuItem value="Высшее">Высшее</MenuItem>
             </Select>
           </FormControl>
         </Grid>
